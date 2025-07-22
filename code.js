@@ -49,10 +49,12 @@ async function getWhois(ip) {
 }
 
 // 🔄 GitHubバージョンチェック（自分と異なれば更新促す）
-async function checkUpdate() {
-  try {const res = await fetch(jsonURL);
-if (!res.ok) throw new Error(`HTTP ${res.status}`);
-const remote = await res.json(); // ← 安定して安全
+async function checkUpdate() {const res = await fetch(jsonURL);
+const contentType = res.headers.get("content-type");
+const rawText = await res.text();
+console.log('⚡ content-type:', contentType);
+console.log('⚡ raw text:', rawText);
+
 
     if (remote.v !== version) {
       console.log(`🆕 新しいバージョンがあります (${remote.v})`);
