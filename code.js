@@ -1,5 +1,4 @@
-const version = '1.1.2
-  '; // ← GitHub側 cui.json と照合される
+const version = '1.1.1'; // ← GitHub側 cui.json と照合される
 
 const fs = require('fs');
 const https = require('https');
@@ -74,6 +73,7 @@ function fetch(url) {
   console.log(`最新バージョン: ${remoteJSON.v}`);
   console.log(`📝 メッセージ: ${remoteJSON.message}`);
 
+  console.log(`📝 JSON: ${remoteJSON}`);
   if (fs.existsSync(targetFile)) {
     const localCode = fs.readFileSync(targetFile, 'utf8');
     const match = localCode.match(/version\s*=\s*['"](.+?)['"]/);
