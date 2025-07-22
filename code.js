@@ -77,7 +77,7 @@ async function getWhois(ip) {
     console.log(`⚠️ バージョン確認に失敗しました (${err.message})。スキャンを続行します...\n`);
     runScan();
   }
-}
+
 
 
 // 🚀 Device Scan 実行ロジック
