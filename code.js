@@ -1,21 +1,27 @@
-const { exec } = require('child_process');
+const version = '1.0.5'; // ← GitHub側 cui.json と照合される
+
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
 const iconv = require('iconv-lite');
 const fetch = require('node-fetch');
 const dns = require('dns');
 const whois = require('whois');
 const os = require('os');
 
-const maxScanCount = 50;
-const myIP = Object.values(os.networkInterfaces()).flat()
-  .find(i => i.family === 'IPv4' && !i.internal)?.address || '不明';
-const baseIP = myIP.substring(0, myIP.lastIndexOf('.') + 1);
+// ✅ GitHubリポジトリにある JSON 情報
+const jsonURL = 'https://raw.githubusercontent.com/N-blog/networkdevicesearch/main/cui.json';
+const selfPath = path.join(__dirname, 'code.js');
 
-const execSJIS = cmd => new Promise((resolve) => {
+// 🔧 SJIS対応コマンド実行（Windows用）
+const { exec } = require('child_process');
+const execSJIS = cmd => new Promise(resolve => {
   exec(cmd, { encoding: 'buffer' }, (_, stdout) => {
     resolve(iconv.decode(stdout || '', 'shift_jis'));
   });
 });
 
+// 🌐 情報取得関数（MACベンダー、DNS名、WHOIS）
 async function getVendor(mac) {
   try {
     const res = await fetch(`https://api.macvendors.com/${mac}`);
@@ -24,7 +30,6 @@ async function getVendor(mac) {
     return '不明';
   }
 }
-
 async function dnsLookup(ip) {
   try {
     const res = await dns.promises.lookupService(ip, 0);
@@ -33,7 +38,6 @@ async function dnsLookup(ip) {
     return ip;
   }
 }
-
 async function getWhois(ip) {
   return new Promise(resolve => {
     whois.lookup(ip, (err, data) => {
@@ -44,7 +48,43 @@ async function getWhois(ip) {
   });
 }
 
-(async () => {
+// 🔄 GitHubバージョンチェック（自分と異なれば更新促す）
+async function checkUpdate() {
+  try {
+    const jsonData = await fetch(jsonURL).then(res => res.text());
+    const remote = JSON.parse(jsonData);
+    if (remote.v !== version) {
+      console.log(`🆕 新しいバージョンがあります (${remote.v})`);
+      console.log(`📝 メッセージ: ${remote.message}`);
+      process.stdout.write('⚠️ アップデートしますか？ (Y/N): ');
+      process.stdin.once('data', input => {
+        const ans = input.toString().trim().toUpperCase();
+        if (ans === 'Y') {
+          console.log('🔔 更新は GitHub から再度ダウンロードしてください。');
+          console.log('（このコードは自己上書きを行いません）');
+          process.exit(0);
+        } else {
+          console.log('⏩ スキップして実行を続けます...\n');
+          runScan();
+        }
+      });
+    } else {
+      console.log('✅ 最新バージョンです。実行します...\n');
+      runScan();
+    }
+  } catch (err) {
+    console.log('⚠️ バージョン確認に失敗しました。スキャンを続行します...\n');
+    runScan();
+  }
+}
+
+// 🚀 Device Scan 実行ロジック
+async function runScan() {
+  const maxScanCount = 50;
+  const myIP = Object.values(os.networkInterfaces()).flat()
+    .find(i => i.family === 'IPv4' && !i.internal)?.address || '不明';
+  const baseIP = myIP.substring(0, myIP.lastIndexOf('.') + 1);
+
   console.log(`\n📡 Device Search 開始（最大 ${maxScanCount} 台）...\n`);
   const arpRaw = await execSJIS('arp -a');
   const results = [];
@@ -69,14 +109,12 @@ async function getWhois(ip) {
     const dnsName = await dnsLookup(ip);
     const whoisInfo = await getWhois(ip);
 
-    results.push({
-      deviceName, ip, vendor,
-      dns: dnsName, whois: whoisInfo,
-      status: isOnline ? 'ONLINE' : 'OFFLINE',
-      ping
-    });
+    results.push({ deviceName, ip, vendor, dns: dnsName, whois: whoisInfo, status: isOnline ? 'ONLINE' : 'OFFLINE', ping });
   }
 
   console.log('\n✅ Device Search 完了！');
   console.table(results);
-})();
+}
+
+// 🔥 実行開始：まずバージョン確認
+checkUpdate();
