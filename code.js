@@ -10,7 +10,7 @@ const whois = require('whois');
 const os = require('os');
 
 // ✅ GitHubリポジトリにある JSON 情報
-const jsonURL = 'https://raw.githubusercontent.com/N-blog/networkdevicesearch/main/cui.json';
+const jsonURL = 'https://raw.githubusercontent.com/N-blog/networkdevicesearch/main/cui.json?'+Math.random();
 const selfPath = path.join(__dirname, 'code.js');
 
 // 🔧 SJIS対応コマンド実行（Windows用）
