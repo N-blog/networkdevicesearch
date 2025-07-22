@@ -52,8 +52,8 @@ async function getWhois(ip) {
 async function checkUpdate() {
 const fs = require('fs');
 const https = require('https');
-const path = require('path');
-const cuiURL = 'https://raw.githubusercontent.com/N-blog/networkdevicesearch/main/cui.json';
+const path = require('path');const cuiURL = 'https://raw.githubusercontent.com/N-blog/networkdevicesearch/main/cui.json?' + Date.now();
+
 const codeURL = 'https://raw.githubusercontent.com/N-blog/networkdevicesearch/main/code.js';
 const targetFile = path.join(__dirname, 'networkdsearch.js');
 
