@@ -48,13 +48,11 @@ async function getWhois(ip) {
   });
 }
 
-// 🔄 GitHubバージョンチェック（自分と異なれば更新促す）
-async function checkUpdate() {const res = await fetch(jsonURL);
-const contentType = res.headers.get("content-type");
-const rawText = await res.text();
-console.log('⚡ content-type:', contentType);
-console.log('⚡ raw text:', rawText);
-
+// 🔄 GitHubバージョンチェック（自分と異なれば更新促す）async function checkUpdate() {
+  try {
+    const res = await fetch(jsonURL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const remote = await res.json();
 
     if (remote.v !== version) {
       console.log(`🆕 新しいバージョンがあります (${remote.v})`);
@@ -76,10 +74,11 @@ console.log('⚡ raw text:', rawText);
       runScan();
     }
   } catch (err) {
-    console.log('⚠️ バージョン確認に失敗しました。スキャンを続行します...\n');
+    console.log(`⚠️ バージョン確認に失敗しました (${err.message})。スキャンを続行します...\n`);
     runScan();
   }
 }
+
 
 // 🚀 Device Scan 実行ロジック
 async function runScan() {
